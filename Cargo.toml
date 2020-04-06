@@ -3,6 +3,8 @@ name = "sql2pb"
 version = "0.1.0"
 authors = ["Lei Xu <eddyxu@gmail.com>"]
 edition = "2018"
+description = "Compile SQL and store the AST into protobuf"
+license = "Apache License 2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
