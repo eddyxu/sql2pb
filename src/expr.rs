@@ -17,18 +17,25 @@ use crate::Result;
 
 use sqlparser::ast::*;
 
-impl IntoPb<pb::expr::Ident> for Ident {
-    fn into_pb(&self) -> Result<pb::expr::Ident> {
+impl IntoPb<pb::Ident> for Ident {
+    fn into_pb(&self) -> Result<pb::Ident> {
         let quote_style = match self.quote_style {
             Some(s) => format!("{}", s),
             None => String::from(""),
         };
-        Ok(pb::expr::Ident {
+        Ok(pb::Ident {
             value: self.value.to_string(),
             quote_style,
         })
     }
 }
+
+impl IntoPb<Vec<pb::Ident>> for Vec<Ident> {
+    fn into_pb(&self) -> Result<Vec<pb::Ident>> {
+        self.iter().map(|x| x.into_pb()).collect()
+    }
+}
+
 
 /// Convert an vector of sql Expr to protobuf
 impl IntoPb<Vec<pb::Expr>> for Vec<Expr> {
@@ -41,7 +48,7 @@ impl IntoPb<pb::Expr> for Expr {
     fn into_pb(&self) -> Result<pb::Expr> {
         match self {
             Expr::Identifier(Ident { value, quote_style }) => Ok(pb::Expr {
-                expr: Some(pb::expr::Expr::Identifier(pb::expr::Ident {
+                expr: Some(pb::expr::Expr::Identifier(pb::Ident {
                     value: String::from(value),
                     quote_style: match quote_style {
                         Some(c) => format!("{}", c),
