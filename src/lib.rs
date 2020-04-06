@@ -71,7 +71,7 @@ impl IntoPb<pb::Statement> for Statement {
                 args,
                 expr,
             } => Ok(pb::Statement {
-                s: Some(pb::statement::S::CreateFunction(pb::CreateFunction {
+                s: Some(pb::statement::S::CreateFunction(pb::statement::CreateFunction {
                     name: name.to_string(),
                     or_replace: *or_replace,
                     if_not_exists: *if_not_exists,

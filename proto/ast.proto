@@ -343,16 +343,16 @@ message Query {
 
 }
 
-/// CreateFunction creates UDFs
-message CreateFunction {
-  string name = 1;
-  repeated Expr args = 2;
-  Expr expr = 3;
-  bool or_replace = 4;
-  bool if_not_exists = 5;
-}
-
 message Statement {
+  /// CreateFunction creates UDFs
+  message CreateFunction {
+    string name = 1;
+    repeated Expr args = 2;
+    Expr expr = 3;
+    bool or_replace = 4;
+    bool if_not_exists = 5;
+  }
+
   oneof s {
     CreateFunction create_function = 1;
   }
