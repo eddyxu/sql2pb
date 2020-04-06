@@ -1,0 +1,134 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// This is the protobuf representation of the SQL AST from
+// https://github.com/andialbrecht/sqlparse
+
+syntax = "proto3";
+
+package sql2pb;
+
+enum DataType {
+  CHAR = 0;
+  VARCHAR = 1;
+  UUID = 2;
+}
+
+message Value {
+  oneof v {
+    string number = 1;
+    string single_quoted_string = 2;
+    bool null = 3;
+  }
+}
+
+/// An SQL expression of any type.
+message Expr {
+  message Ident {
+    string value = 1;
+    string quote_style = 2;
+  }
+
+  // A function call
+  message Function {
+    string name = 1;
+    repeated Expr args = 2;
+    bool distinct = 3;
+    // over
+  }
+
+  message BinaryOp {
+    enum Operator {
+      PLUS = 0;
+      MINUS = 1;
+      MULTIPLY = 2;
+      DIVIDE = 3;
+      MODULUS = 4;
+      GT = 5;
+      LT = 6;
+      GT_EQ = 7;
+      LT_EQ = 8;
+      EQ = 9;
+      NOT_EQ = 10;
+      AND = 11;
+      OR = 12;
+      LIKE = 13;
+      NOT_LIKE = 14;
+    }
+    Expr left = 1;
+    Operator op = 2;
+    Expr right = 3;
+  }
+
+  message UnaryOp {
+    string op = 1;
+    Expr expr = 2;
+  }
+
+  message Cast {
+    Expr expr = 1;
+    string data_type = 2;
+  }
+
+  message Case {
+    Expr operand = 1;
+    repeated Expr conditions = 2;
+    repeated Expr results = 3;
+    Expr else_result = 4;
+  }
+
+  message Nested {
+    Expr expr = 1;
+  }
+
+  message Parameter {
+    Ident name = 1;
+    string data_type = 2;
+    Value default = 3;
+  }
+
+  /// `<expr> [ NOT ] BETWEEN <low> AND <high>`
+  message Between {
+    Expr expr = 1;
+    bool negated = 2;
+    Expr low = 3;
+    Expr high = 4;
+  }
+
+  oneof expr {
+    Ident identifier = 1;
+    Function function = 2;
+    BinaryOp binary_op = 3;
+    UnaryOp unary_op = 4;
+    Parameter parameter = 5;
+    Cast cast = 6;
+    Value value = 7;
+    Case case = 8;
+    Nested nested = 9;
+    Between between = 10;
+  }
+}
+
+/// CreateFunction creates UDFs
+message CreateFunction {
+  string name = 1;
+  repeated Expr args = 2;
+  Expr expr = 3;
+  bool or_replace = 4;
+  bool if_not_exists = 5;
+}
+
+message Statement {
+  oneof s {
+    CreateFunction create_function = 1;
+  }
+}
