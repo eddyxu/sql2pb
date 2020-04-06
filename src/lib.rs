@@ -62,6 +62,23 @@ pub fn sql2pb(sql: &str) -> Result<Vec<pb::Statement>> {
 
 impl IntoPb<pb::Statement> for Statement {
     fn into_pb(&self) -> Result<pb::Statement> {
-        Err(ConvertError::new("unimplemented".to_string()))
+        match self {
+            Statement::CreateFunction {
+                name,
+                or_replace,
+                if_not_exists,
+                args,
+                expr,
+            } => Ok(pb::Statement {
+                s: Some(pb::statement::S::CreateFunction(pb::CreateFunction {
+                    name: name.to_string(),
+                    or_replace: *or_replace,
+                    if_not_exists: *if_not_exists,
+                    expr: Some(expr.into_pb()?),
+                    args: args.into_pb()?,
+                })),
+            }),
+            _ => Err(ConvertError::new("unimplemented".to_string())),
+        }
     }
 }
