@@ -39,7 +39,7 @@ fn main() {
                 .short("d")
                 .long("--dialect")
                 .default_value("bigquery")
-                .value_name("bigquery|postgres|mysql"),
+                .value_name("ansi|bigquery|postgres|mysql"),
         )
         .get_matches();
 

@@ -52,15 +52,11 @@ impl IntoPb<pb::DataType> for DataType {
                 DataType::Regclass => dt::DataType::Regclass(dt::Regclass {}),
                 DataType::Text => dt::DataType::Text(dt::Text {}),
                 DataType::Bytea => dt::DataType::Bytea(dt::Bytea {}),
-                DataType::Custom(name) => {
-                    dt::DataType::Custom(
-                        dt::Custom{
-                            name: name.0.into_pb()?
-                        }
-                    )
-                }
-                DataType::Array(dt) => dt::DataType::Array(Box::new(dt::Array{
-                    data_type: Some(Box::new(dt.into_pb()?))
+                DataType::Custom(name) => dt::DataType::Custom(dt::Custom {
+                    name: name.0.into_pb()?,
+                }),
+                DataType::Array(dt) => dt::DataType::Array(Box::new(dt::Array {
+                    data_type: Some(Box::new(dt.into_pb()?)),
                 })),
             }),
         })

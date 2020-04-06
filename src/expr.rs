@@ -36,7 +36,6 @@ impl IntoPb<Vec<pb::Ident>> for Vec<Ident> {
     }
 }
 
-
 /// Convert an vector of sql Expr to protobuf
 impl IntoPb<Vec<pb::Expr>> for Vec<Expr> {
     fn into_pb(&self) -> Result<Vec<pb::Expr>> {
@@ -88,12 +87,19 @@ impl IntoPb<pb::Expr> for Expr {
                     })),
                 })
             }
-            Expr::UnaryOp { op, expr } => Ok(pb::Expr {
-                expr: Some(pb::expr::Expr::UnaryOp(Box::new(pb::expr::UnaryOp {
-                    op: format!("{}", op),
-                    expr: Some(Box::new(expr.into_pb()?)),
-                }))),
-            }),
+            Expr::UnaryOp { op, expr } => {
+                use pb::expr::unary_op::Operator;
+                Ok(pb::Expr {
+                    expr: Some(pb::expr::Expr::UnaryOp(Box::new(pb::expr::UnaryOp {
+                        op: match op {
+                            UnaryOperator::Plus => Operator::Plus,
+                            UnaryOperator::Minus => Operator::Minus,
+                            UnaryOperator::Not => Operator::Not,
+                        } as i32,
+                        expr: Some(Box::new(expr.into_pb()?)),
+                    }))),
+                })
+            }
             Expr::BinaryOp { left, op, right } => {
                 use pb::expr::binary_op::Operator;
                 Ok(pb::Expr {

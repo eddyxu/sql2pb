@@ -17,6 +17,8 @@ syntax = "proto3";
 
 package sql2pb;
 
+// An identifier, decomposed into its value or character data and the quote style.
+// https://github.com/andygrove/sqlparser-rs/blob/master/src/ast/mod.rs
 message Ident {
   string value = 1;
   string quote_style = 2;
@@ -157,15 +159,58 @@ message Value {
 /// An SQL expression of any type.
 message Expr {
 
-
-  // A function call
-  message Function {
-    string name = 1;
-    repeated Expr args = 2;
-    bool distinct = 3;
-    // over
+  // Identifier e.g. table name or column name
+  message Identifier {
+    Ident ident = 1;
   }
 
+  // Unqualified wildcard (`*`)
+  message Wildcard {}
+
+  // Qualified wildcard, e.g. `alias.*` or `schema.table.*`.
+  // (Same caveats apply to `QualifiedWildcard` as to `Wildcard`.)
+  message QualifiedWildcard {
+    repeated Ident idents = 1;
+  }
+
+  /// Multi-part identifier, e.g. `table_alias.column` or `schema.table.col`
+  message CompoundIdentifier {
+    repeated Ident idents = 1;
+  }
+
+  /// `IS NULL` expression
+  message IsNull {
+    Expr expr = 1;
+  }
+
+  /// `IS NOT NULL` expression
+  message IsNotNull {
+    Expr expr = 1;
+  }
+
+  /// `[ NOT ] IN (val1, val2, ...)`
+  message InList {
+    Expr expr = 1;
+    repeated Expr list = 2;
+    bool negated = 3;
+  }
+
+  /// `[ NOT ] IN (SELECT ...)`
+  // message InSubquery {
+  //   Expr expr = 1;
+  //   Query subquery = 2;
+  //   bool negated = 3;
+  // }
+
+  /// `<expr> [ NOT ] BETWEEN <low> AND <high>`
+  message Between {
+    Expr expr = 1;
+    bool negated = 2;
+    Expr low = 3;
+    Expr high = 4;
+  }
+
+  /// Binary operation e.g. `1 + 1` or `foo > bar`
   message BinaryOp {
     enum Operator {
       PLUS = 0;
@@ -190,7 +235,12 @@ message Expr {
   }
 
   message UnaryOp {
-    string op = 1;
+    enum Operator {
+      PLUS = 0;
+      MINUS = 1;
+      NOT = 2;
+    }
+    Operator op = 1;
     Expr expr = 2;
   }
 
@@ -216,13 +266,15 @@ message Expr {
     Value default = 3;
   }
 
-  /// `<expr> [ NOT ] BETWEEN <low> AND <high>`
-  message Between {
-    Expr expr = 1;
-    bool negated = 2;
-    Expr low = 3;
-    Expr high = 4;
+  // A function call
+  message Function {
+    string name = 1;
+    repeated Expr args = 2;
+    bool distinct = 3;
+    // over
   }
+
+
 
   oneof expr {
     Ident identifier = 1;
