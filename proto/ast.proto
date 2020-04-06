@@ -24,6 +24,15 @@ message Ident {
   string quote_style = 2;
 }
 
+enum DateTimeField {
+  YEAR = 0;
+  MONTH = 1;
+  DAY = 2;
+  HOUR = 3;
+  MINUTE = 4;
+  SECOND = 5;
+}
+
 // SQL data type
 // https://github.com/andygrove/sqlparser-rs/blob/master/src/ast/data_type.rs
 message DataType {
@@ -196,11 +205,11 @@ message Expr {
   }
 
   /// `[ NOT ] IN (SELECT ...)`
-  // message InSubquery {
-  //   Expr expr = 1;
-  //   Query subquery = 2;
-  //   bool negated = 3;
-  // }
+  message InSubquery {
+    Expr expr = 1;
+    Query subquery = 2;
+    bool negated = 3;
+  }
 
   /// `<expr> [ NOT ] BETWEEN <low> AND <high>`
   message Between {
@@ -256,10 +265,29 @@ message Expr {
     Expr else_result = 4;
   }
 
+  message Extract {
+    DateTimeField field = 1;
+    Expr expr = 2;
+  }
+
+  // `expr COLLATE collation`
+  message Collate {
+      Expr expr = 1;
+      repeated Ident collation = 2;
+  }
+
+  // Nested expression e.g. `(foo > bar)` or `(1)`
   message Nested {
     Expr expr = 1;
   }
 
+  /// A literal value, such as string, number, date or NULL
+  // Name it to ValueExpr to avoid conflict with the root level Value message
+  message ValueExpr {
+    Value value = 1;
+  }
+
+  // function parameter
   message Parameter {
     Ident name = 1;
     string data_type = 2;
@@ -274,20 +302,45 @@ message Expr {
     // over
   }
 
+  // An exists expression `EXISTS(SELECT ...)`, used in expressions like
+  // `WHERE EXISTS (SELECT ...)`.
+  message Exists {
+    Query query = 1;
+  }
 
+  // A parenthesized subquery `(SELECT ...)`, used in expression like
+  // `SELECT (subquery) AS x` or `WHERE (subquery) = x`
+  message Subquery {
+    Query query = 1;
+  }
 
   oneof expr {
-    Ident identifier = 1;
-    Function function = 2;
-    BinaryOp binary_op = 3;
-    UnaryOp unary_op = 4;
-    Parameter parameter = 5;
-    Cast cast = 6;
-    Value value = 7;
-    Case case = 8;
-    Nested nested = 9;
-    Between between = 10;
+    Identifier identifier = 1;
+    Wildcard wildcard = 2;
+    QualifiedWildcard quanlified_wildcard = 3;
+    CompoundIdentifier compound_identifier = 4;
+    IsNull is_null = 5;
+    IsNotNull is_not_null = 6;
+    InList in_list = 7;
+    InSubquery in_subquery = 8;
+    Between between = 9;
+    BinaryOp binary_op = 10;
+    UnaryOp unary_op = 11;
+    Cast cast = 12;
+    Extract extract = 13;
+    Collate collate = 14;
+    Nested nested = 15;
+    ValueExpr value = 16;
+    Function function = 17;
+    Case case = 18;
+    Exists exists = 19;
+    Subquery subquery = 20;
+    Parameter parameter = 21;
   }
+}
+
+message Query {
+
 }
 
 /// CreateFunction creates UDFs

@@ -19,13 +19,12 @@ use sqlparser::ast::*;
 
 impl IntoPb<pb::Ident> for Ident {
     fn into_pb(&self) -> Result<pb::Ident> {
-        let quote_style = match self.quote_style {
-            Some(s) => format!("{}", s),
-            None => String::from(""),
-        };
         Ok(pb::Ident {
             value: self.value.to_string(),
-            quote_style,
+            quote_style: match self.quote_style {
+                Some(s) => format!("{}", s),
+                None => String::from(""),
+            },
         })
     }
 }
@@ -47,12 +46,14 @@ impl IntoPb<pb::Expr> for Expr {
     fn into_pb(&self) -> Result<pb::Expr> {
         match self {
             Expr::Identifier(Ident { value, quote_style }) => Ok(pb::Expr {
-                expr: Some(pb::expr::Expr::Identifier(pb::Ident {
-                    value: String::from(value),
-                    quote_style: match quote_style {
-                        Some(c) => format!("{}", c),
-                        None => String::from(""),
-                    },
+                expr: Some(pb::expr::Expr::Identifier(pb::expr::Identifier {
+                    ident: Some(pb::Ident {
+                        value: String::from(value),
+                        quote_style: match quote_style {
+                            Some(c) => format!("{}", c),
+                            None => String::from(""),
+                        },
+                    }),
                 })),
             }),
             Expr::Parameter {
@@ -152,7 +153,10 @@ impl IntoPb<pb::Expr> for Expr {
                 }))),
             }),
             Expr::Value(v) => Ok(pb::Expr {
-                expr: Some(pb::expr::Expr::Value(v.into_pb()?)),
+                expr: Some(pb::expr::Expr::Value(
+                    pb::expr::ValueExpr{
+                        value: Some(v.into_pb()?),
+                    })),
             }),
             Expr::Nested(e) => Ok(pb::Expr {
                 expr: Some(pb::expr::Expr::Nested(Box::new(pb::expr::Nested {
