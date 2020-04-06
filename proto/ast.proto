@@ -17,10 +17,124 @@ syntax = "proto3";
 
 package sql2pb;
 
-enum DataType {
-  CHAR = 0;
-  VARCHAR = 1;
-  UUID = 2;
+// SQL data type
+// https://github.com/andygrove/sqlparser-rs/blob/master/src/ast/data_type.rs
+message DataType {
+  /// Fixed-length character type e.g. CHAR(10)
+  message Char {
+    uint64 length = 1;
+  }
+
+  /// Variable-length character type e.g. VARCHAR(10)
+  message Varchar {
+    uint64 length = 1;
+  }
+
+  /// Uuid type
+  message Uuid {}
+
+  /// Large character object e.g. CLOB(1000)
+  message Clob {
+    uint64 length = 1;
+  }
+
+  /// Fixed-length binary type e.g. BINARY(10)
+  message Binary {
+    uint64 length = 1;
+  }
+
+  /// Variable-length binary type e.g. VARBINARY(10)
+  message Varbinary {
+    uint64 length = 1;
+  }
+
+  /// Large binary object e.g. BLOB(1000)
+  message Blob {
+    uint64 length = 1;
+  }
+
+  /// Decimal type with optional precision and scale e.g. DECIMAL(10,2)
+  message Decimal {
+    uint64 precision = 1;
+    uint64 scale = 2;
+  }
+
+  /// Floating point with optional precision e.g. FLOAT(8)
+  message Float {
+    uint64 length = 1;
+  }
+
+  /// Integer
+  message Int {}
+
+  /// Big integer
+  message BigInt {}
+
+  /// Floating point e.g. REAL
+  message Real {}
+
+  /// Double e.g. DOUBLE PRECISION
+  message Double {}
+
+  /// Boolean
+  message Boolean {}
+
+  /// Date
+  message Date {}
+
+  /// Time
+  message Time {}
+
+  /// Timestamp
+  message Timestamp {}
+
+  /// Interval
+  message Interval {}
+
+  /// Regclass used in postgresql serial
+  message Regclass {}
+
+  /// Text
+  message Text {}
+
+  /// Bytea
+  message Bytea {}
+
+  // Custom type such as enums
+  message Custom {
+    repeated Expr.Ident name = 1;
+  }
+
+  /// Arrays
+  message Array {
+    DataType data_type = 1;
+  }
+
+  oneof data_type {
+    Char char = 1;
+    Varchar varchar = 2;
+    Uuid uuid = 3;
+    Clob clob = 4;
+    Binary binary = 5;
+    Varbinary varbinary = 6;
+    Blob blob = 7;
+    Decimal decimal = 8;
+    Float float = 9;
+    Int int = 10;
+    BigInt bigint = 11;
+    Real real = 12;
+    Double double = 13;
+    Boolean boolean = 14;
+    Date date = 15;
+    Time time = 16;
+    Timestamp timestamp = 17;
+    Interval interval = 18;
+    Regclass regclass = 19;
+    Text text = 20;
+    Bytea bytea = 21;
+    Custom custom = 22;
+    Array array = 23;
+  }
 }
 
 message Value {
