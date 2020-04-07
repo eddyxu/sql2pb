@@ -531,11 +531,6 @@ message Query {
 
 /// A top-level statement (SELECT, INSERT, CREATE, etc.)
 message Statement {
-  /// SELECT
-  message Query {
-    Query query = 1;
-  }
-
   /// CreateFunction creates UDFs
   message CreateFunction {
     string name = 1;
