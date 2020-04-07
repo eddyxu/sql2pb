@@ -31,7 +31,7 @@ impl IntoPb<pb::Ident> for Ident {
 
 impl IntoPb<pb::ObjectName> for ObjectName {
     fn into_pb(&self) -> Result<pb::ObjectName> {
-        Ok(pb::ObjectName{
+        Ok(pb::ObjectName {
             name: self.0.into_pb()?,
         })
     }
@@ -161,10 +161,9 @@ impl IntoPb<pb::Expr> for Expr {
                 }))),
             }),
             Expr::Value(v) => Ok(pb::Expr {
-                expr: Some(pb::expr::Expr::Value(
-                    pb::expr::ValueExpr{
-                        value: Some(v.into_pb()?),
-                    })),
+                expr: Some(pb::expr::Expr::Value(pb::expr::ValueExpr {
+                    value: Some(v.into_pb()?),
+                })),
             }),
             Expr::Nested(e) => Ok(pb::Expr {
                 expr: Some(pb::expr::Expr::Nested(Box::new(pb::expr::Nested {

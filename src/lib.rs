@@ -66,18 +66,27 @@ impl IntoPb<pb::Statement> for Statement {
         match self {
             Statement::CreateFunction {
                 name,
+                temporary,
                 or_replace,
                 if_not_exists,
                 args,
+                returns,
                 expr,
             } => Ok(pb::Statement {
-                s: Some(pb::statement::S::CreateFunction(pb::statement::CreateFunction {
-                    name: name.to_string(),
-                    or_replace: *or_replace,
-                    if_not_exists: *if_not_exists,
-                    expr: Some(expr.into_pb()?),
-                    args: args.into_pb()?,
-                })),
+                s: Some(pb::statement::S::CreateFunction(
+                    pb::statement::CreateFunction {
+                        name: name.to_string(),
+                        temporary: *temporary,
+                        or_replace: *or_replace,
+                        if_not_exists: *if_not_exists,
+                        returns: match returns {
+                            Some(dt) => Some(dt.into_pb()?),
+                            None => None,
+                        },
+                        expr: Some(expr.into_pb()?),
+                        args: args.into_pb()?,
+                    },
+                )),
             }),
             _ => Err(ConvertError::new("unimplemented".to_string())),
         }

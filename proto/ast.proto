@@ -535,9 +535,11 @@ message Statement {
   message CreateFunction {
     string name = 1;
     repeated Expr args = 2;
-    Expr expr = 3;
-    bool or_replace = 4;
-    bool if_not_exists = 5;
+    DataType returns = 3;
+    Expr expr = 4;
+    bool or_replace = 5;
+    bool if_not_exists = 6;
+    bool temporary = 7;
   }
 
   oneof s {
