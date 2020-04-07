@@ -24,6 +24,11 @@ message Ident {
   string quote_style = 2;
 }
 
+// A name of a table, view, custom type, etc., possibly multi-part, i.e. db.schema.obj
+message ObjectName {
+  repeated Ident name = 1;
+}
+
 enum DateTimeField {
   YEAR = 0;
   MONTH = 1;
@@ -121,7 +126,7 @@ message DataType {
 
   // Custom type such as enums
   message Custom {
-    repeated Ident name = 1;
+    ObjectName name = 1;
   }
 
   /// Arrays
@@ -317,7 +322,7 @@ message Expr {
   oneof expr {
     Identifier identifier = 1;
     Wildcard wildcard = 2;
-    QualifiedWildcard quanlified_wildcard = 3;
+    QualifiedWildcard qualified_wildcard = 3;
     CompoundIdentifier compound_identifier = 4;
     IsNull is_null = 5;
     IsNotNull is_not_null = 6;
@@ -339,11 +344,198 @@ message Expr {
   }
 }
 
-message Query {
-
+message TableAlias {
+  Ident name = 1;
+  repeated Ident columns = 2;
 }
 
+/// SQL ORDER BY expression
+message OrderByExpr {
+  Expr expr = 1;
+  bool asc = 2;
+}
+
+/// A single CTE (used after `WITH`): `alias [(col1, col2, ...)] AS ( query )`
+message Cte {
+  TableAlias alias = 1;
+  Query query = 2;
+}
+
+/// SQL semantic equivalent of LIMIT but with same structure as FETCH.
+message Top {
+  bool with_ties = 1;
+  bool percent = 2;
+  Expr quantity = 3;
+}
+
+message Fetch {
+  bool with_ties = 1;
+  bool percent = 2;
+  Expr quantity = 3;
+}
+
+message Join {
+
+  /// JoinConstraint in sqlparser
+  message Constraint {
+    message On {
+      Expr expr = 1;
+    }
+
+    message Using {
+      repeated Ident ident = 1;
+    }
+
+    message Natural {}
+
+    oneof constraint {
+      On on = 1;
+      Using using = 2;
+      Natural natural = 3;
+    }
+  }
+
+  message Operator {
+    message Inner {
+      Constraint constraint = 1;
+    }
+
+    message LeftOuter {
+      Constraint constraint = 1;
+    }
+
+    message RightOuter {
+      Constraint constraint = 1;
+    }
+
+    message FullOuter {
+      Constraint constraint = 1;
+    }
+
+    message CrossJoin {}
+
+    /// CROSS APPLY (non-standard)
+    message CrossApply {}
+
+    /// OUTER APPLY (non-standard)
+    message OuterApply {}
+  }
+
+  TableFactor relation = 1;
+
+  Operator join_operator = 2;
+}
+
+/// A table name or a parenthesized subquery with an optional alias
+message TableFactor {
+  message Table {
+    ObjectName name = 1;
+    TableAlias alias = 2;
+    repeated Expr args = 3;
+    repeated Expr with_hints = 4;
+  }
+
+  message Derived {
+    bool lateral = 1;
+    Query subquery = 2;
+    TableAlias alias = 3;
+  }
+
+  message NestedJoin {}
+
+  oneof factor {
+    Table table = 1;
+    Derived derived = 2;
+    NestedJoin nested_join = 3;
+  }
+}
+
+message TableWithJoins {
+  TableFactor relation = 1;
+  repeated Join joins = 2;
+}
+
+message SelectItem {
+  message UnnamedExpr {
+    Expr expr = 1;
+  }
+
+  message ExprWithAlias {
+    Expr expr = 1;
+    Ident alias = 2;
+  }
+
+  message QualifiedWildcard {
+    repeated Ident name = 1;
+  }
+
+  message Wildcard {}
+
+  oneof item {
+    UnnamedExpr unnamed_expr = 1;
+    ExprWithAlias expr_with_alias = 2;
+    QualifiedWildcard qualified_wildcard = 3;
+    Wildcard wildcard = 4;
+  }
+}
+
+message Select {
+  bool distinct = 1;
+  Top top = 2;
+  repeated SelectItem projection = 3;
+  repeated TableWithJoins from = 4;
+  Expr selection = 5;
+  repeated Expr group_by = 6;
+  Expr having = 7;
+}
+
+message SetExpr {
+
+  message SetOperation {
+    // Operator is SetOperator in sqlparser-rs.
+    // Move here to make the namespace cleaner.
+    enum Operator {
+      UNION = 0;
+      EXCEPT = 1;
+      INTERSECT = 2;
+    }
+
+    Operator op = 1;
+    bool all = 2;
+    SetExpr left = 3;
+    SetExpr right = 4;
+  }
+
+  oneof expr {
+    Query query = 2;
+    SetOperation set_operation = 3;
+  }
+}
+
+/// The most complete variant of a `SELECT` query expression, optionally
+/// including `WITH`, `UNION` / other set operations, and `ORDER BY`.
+message Query {
+  /// WITH (common table expressions, or CTEs)
+  repeated Cte ctes = 1;
+  /// SELECT or UNION / EXCEPT / INTECEPT
+  SetExpr body = 2;
+  /// ORDER BY
+  repeated OrderByExpr order_by = 3;
+  /// `LIMIT { <N> | ALL }`
+  Expr limit = 4;
+  /// `OFFSET <N> { ROW | ROWS }`
+  Expr offset = 5;
+  /// `FETCH { FIRST | NEXT } <N> [ PERCENT ] { ROW | ROWS } | { ONLY | WITH TIES }`
+  Fetch fetch = 6;
+}
+
+/// A top-level statement (SELECT, INSERT, CREATE, etc.)
 message Statement {
+  /// SELECT
+  message Query {
+    Query query = 1;
+  }
+
   /// CreateFunction creates UDFs
   message CreateFunction {
     string name = 1;
@@ -354,6 +546,7 @@ message Statement {
   }
 
   oneof s {
-    CreateFunction create_function = 1;
+    Query query = 1;
+    CreateFunction create_function = 2;
   }
 }

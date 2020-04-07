@@ -29,6 +29,14 @@ impl IntoPb<pb::Ident> for Ident {
     }
 }
 
+impl IntoPb<pb::ObjectName> for ObjectName {
+    fn into_pb(&self) -> Result<pb::ObjectName> {
+        Ok(pb::ObjectName{
+            name: self.0.into_pb()?,
+        })
+    }
+}
+
 impl IntoPb<Vec<pb::Ident>> for Vec<Ident> {
     fn into_pb(&self) -> Result<Vec<pb::Ident>> {
         self.iter().map(|x| x.into_pb()).collect()
